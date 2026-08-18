@@ -1,0 +1,947 @@
+local Players = game:GetService("Players")
+local UIS = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+local Lighting = game:GetService("Lighting")
+local CollectionService = game:GetService("CollectionService")
+
+local player = Players.LocalPlayer
+
+local OWNER_ID = 10966656598
+
+if player.UserId ~= OWNER_ID then
+	return
+end
+
+--==================================================
+-- SETTINGS
+--==================================================
+
+local WalkSpeed = 16
+local MaxWalkSpeed = 100
+
+local NoClip = false
+local GodMode = false
+local AutoHeal = false
+local InfiniteShoot = false
+local NoFog = false
+local FullBright = false
+local FPSBoost = false
+local AutoParry = false
+local InstantGenerator = false
+
+local AimSurvivor = false
+local AimKiller = false
+
+local ESP = {
+	Survivor = false,
+	Killer = false,
+	Hook = false,
+	Generator = false,
+	Pallet = false,
+	Window = false,
+	SCP = false,
+	Zombie = false,
+	Gate = false
+}
+
+--==================================================
+-- COLORS
+--==================================================
+
+local BG = Color3.fromRGB(8, 11, 18)
+local PANEL = Color3.fromRGB(15, 20, 30)
+local BUTTON = Color3.fromRGB(24, 31, 44)
+local BLUE = Color3.fromRGB(0, 140, 255)
+local BLUE2 = Color3.fromRGB(0, 85, 180)
+local WHITE = Color3.fromRGB(240, 245, 255)
+local GRAY = Color3.fromRGB(145, 155, 175)
+
+--==================================================
+-- CHARACTER
+--==================================================
+
+local function Character()
+	return player.Character
+end
+
+local function Humanoid()
+	local c = Character()
+	return c and c:FindFirstChildOfClass("Humanoid")
+end
+
+local function Root()
+	local c = Character()
+	return c and c:FindFirstChild("HumanoidRootPart")
+end
+
+--==================================================
+-- GUI
+--==================================================
+
+local gui = Instance.new("ScreenGui")
+gui.Name = "ViolenceDistrictAdmin"
+gui.ResetOnSpawn = false
+gui.IgnoreGuiInset = true
+gui.Parent = player:WaitForChild("PlayerGui")
+
+local main = Instance.new("Frame")
+main.Size = UDim2.fromOffset(330, 620)
+main.Position = UDim2.new(0, 25, 0.5, -310)
+main.BackgroundColor3 = BG
+main.BorderSizePixel = 0
+main.Parent = gui
+
+Instance.new("UICorner", main).CornerRadius = UDim.new(0, 16)
+
+local outline = Instance.new("UIStroke")
+outline.Color = BLUE
+outline.Transparency = 0.55
+outline.Thickness = 1.5
+outline.Parent = main
+
+--==================================================
+-- HEADER
+--==================================================
+
+local header = Instance.new("Frame")
+header.Size = UDim2.new(1, 0, 0, 65)
+header.BackgroundColor3 = PANEL
+header.BorderSizePixel = 0
+header.Parent = main
+
+Instance.new("UICorner", header).CornerRadius = UDim.new(0, 16)
+
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, -25, 0, 30)
+title.Position = UDim2.fromOffset(15, 7)
+title.BackgroundTransparency = 1
+title.Text = "VIOLENCE DISTRICT"
+title.TextColor3 = WHITE
+title.Font = Enum.Font.GothamBold
+title.TextSize = 19
+title.TextXAlignment = Enum.TextXAlignment.Left
+title.Parent = header
+
+local sub = Instance.new("TextLabel")
+sub.Size = UDim2.new(1, -25, 0, 20)
+sub.Position = UDim2.fromOffset(15, 36)
+sub.BackgroundTransparency = 1
+sub.Text = "OWNER / DEBUG PANEL"
+sub.TextColor3 = BLUE
+sub.Font = Enum.Font.GothamBold
+sub.TextSize = 10
+sub.TextXAlignment = Enum.TextXAlignment.Left
+sub.Parent = header
+
+--==================================================
+-- DRAG
+--==================================================
+
+local dragging = false
+local dragStart
+local startPos
+
+header.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1
+		or input.UserInputType == Enum.UserInputType.Touch then
+
+		dragging = true
+		dragStart = input.Position
+		startPos = main.Position
+	end
+end)
+
+UIS.InputChanged:Connect(function(input)
+	if not dragging then
+		return
+	end
+
+	if input.UserInputType == Enum.UserInputType.MouseMovement
+		or input.UserInputType == Enum.UserInputType.Touch then
+
+		local delta = input.Position - dragStart
+
+		main.Position = UDim2.new(
+			startPos.X.Scale,
+			startPos.X.Offset + delta.X,
+			startPos.Y.Scale,
+			startPos.Y.Offset + delta.Y
+		)
+	end
+end)
+
+UIS.InputEnded:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1
+		or input.UserInputType == Enum.UserInputType.Touch then
+
+		dragging = false
+	end
+end)
+
+--==================================================
+-- SCROLLING
+--==================================================
+
+local scroll = Instance.new("ScrollingFrame")
+scroll.Size = UDim2.new(1, -10, 1, -75)
+scroll.Position = UDim2.fromOffset(5, 70)
+scroll.BackgroundTransparency = 1
+scroll.BorderSizePixel = 0
+scroll.ScrollBarThickness = 4
+scroll.ScrollBarImageColor3 = BLUE
+scroll.CanvasSize = UDim2.new(0, 0, 0, 1100)
+scroll.Parent = main
+
+--==================================================
+-- BUTTON
+--==================================================
+
+local y = 10
+
+local function Button(text, callback)
+	local b = Instance.new("TextButton")
+
+	b.Size = UDim2.new(1, -20, 0, 42)
+	b.Position = UDim2.fromOffset(10, y)
+	b.BackgroundColor3 = BUTTON
+	b.BorderSizePixel = 0
+	b.Text = text .. "  •  OFF"
+	b.TextColor3 = WHITE
+	b.Font = Enum.Font.GothamBold
+	b.TextSize = 13
+	b.AutoButtonColor = false
+	b.Parent = scroll
+
+	Instance.new("UICorner", b).CornerRadius = UDim.new(0, 9)
+
+	local stroke = Instance.new("UIStroke")
+	stroke.Color = Color3.fromRGB(40, 50, 68)
+	stroke.Parent = b
+
+	b.MouseButton1Down:Connect(function()
+		TweenService:Create(
+			b,
+			TweenInfo.new(0.08),
+			{BackgroundColor3 = BLUE2}
+		):Play()
+	end)
+
+	b.MouseButton1Up:Connect(function()
+		TweenService:Create(
+			b,
+			TweenInfo.new(0.12),
+			{BackgroundColor3 = BUTTON}
+		):Play()
+	end)
+
+	b.MouseButton1Click:Connect(function()
+		callback(b)
+	end)
+
+	y += 48
+
+	return b
+end
+
+local function Toggle(button, name, value)
+	button.Text = name .. (value and "  •  ON" or "  •  OFF")
+
+	TweenService:Create(
+		button,
+		TweenInfo.new(0.15),
+		{
+			BackgroundColor3 = value and BLUE2 or BUTTON
+		}
+	):Play()
+end
+
+--==================================================
+-- NOCLIP
+--==================================================
+
+local noclipConnection
+
+local noclipButton = Button("◈ NOCLIP", function(button)
+
+	NoClip = not NoClip
+
+	if NoClip then
+
+		noclipConnection = RunService.Stepped:Connect(function()
+
+			local c = Character()
+
+			if c then
+				for _, obj in ipairs(c:GetDescendants()) do
+					if obj:IsA("BasePart") then
+						obj.CanCollide = false
+					end
+				end
+			end
+
+		end)
+
+	else
+
+		if noclipConnection then
+			noclipConnection:Disconnect()
+			noclipConnection = nil
+		end
+
+	end
+
+	Toggle(button, "◈ NOCLIP", NoClip)
+end)
+
+--==================================================
+-- WALK SPEED SLIDER
+--==================================================
+
+local speedTitle = Instance.new("TextLabel")
+speedTitle.Size = UDim2.new(1, -20, 0, 25)
+speedTitle.Position = UDim2.fromOffset(10, y)
+speedTitle.BackgroundTransparency = 1
+speedTitle.Text = "WALK SPEED"
+speedTitle.TextColor3 = WHITE
+speedTitle.Font = Enum.Font.GothamBold
+speedTitle.TextSize = 12
+speedTitle.TextXAlignment = Enum.TextXAlignment.Left
+speedTitle.Parent = scroll
+
+y += 28
+
+local speedValue = Instance.new("TextLabel")
+speedValue.Size = UDim2.fromOffset(50, 25)
+speedValue.Position = UDim2.new(1, -60, 0, y - 28)
+speedValue.BackgroundTransparency = 1
+speedValue.Text = "16"
+speedValue.TextColor3 = BLUE
+speedValue.Font = Enum.Font.GothamBold
+speedValue.TextSize = 14
+speedValue.Parent = scroll
+
+local slider = Instance.new("Frame")
+slider.Size = UDim2.new(1, -20, 0, 8)
+slider.Position = UDim2.fromOffset(10, y)
+slider.BackgroundColor3 = Color3.fromRGB(35, 42, 56)
+slider.BorderSizePixel = 0
+slider.Parent = scroll
+
+Instance.new("UICorner", slider).CornerRadius = UDim.new(1, 0)
+
+local fill = Instance.new("Frame")
+fill.Size = UDim2.new(0.15, 0, 1, 0)
+fill.BackgroundColor3 = BLUE
+fill.BorderSizePixel = 0
+fill.Parent = slider
+
+Instance.new("UICorner", fill).CornerRadius = UDim.new(1, 0)
+
+local knob = Instance.new("TextButton")
+knob.Size = UDim2.fromOffset(18, 18)
+knob.Position = UDim2.new(0.15, -9, 0.5, -9)
+knob.BackgroundColor3 = WHITE
+knob.Text = ""
+knob.BorderSizePixel = 0
+knob.Parent = slider
+
+Instance.new("UICorner", knob).CornerRadius = UDim.new(1, 0)
+
+local sliderDragging = false
+
+local function ChangeSpeed(x)
+
+	local percent = math.clamp(
+		(x - slider.AbsolutePosition.X) /
+			slider.AbsoluteSize.X,
+		0,
+		1
+	)
+
+	WalkSpeed = math.floor(
+		1 + percent * (MaxWalkSpeed - 1)
+	)
+
+	speedValue.Text = tostring(WalkSpeed)
+
+	fill.Size = UDim2.new(percent, 0, 1, 0)
+	knob.Position = UDim2.new(percent, -9, 0.5, -9)
+
+	local hum = Humanoid()
+
+	if hum then
+		hum.WalkSpeed = WalkSpeed
+	end
+end
+
+slider.InputBegan:Connect(function(input)
+
+	if input.UserInputType == Enum.UserInputType.MouseButton1
+		or input.UserInputType == Enum.UserInputType.Touch then
+
+		sliderDragging = true
+		ChangeSpeed(input.Position.X)
+	end
+end)
+
+knob.InputBegan:Connect(function(input)
+
+	if input.UserInputType == Enum.UserInputType.MouseButton1
+		or input.UserInputType == Enum.UserInputType.Touch then
+
+		sliderDragging = true
+	end
+end)
+
+UIS.InputChanged:Connect(function(input)
+
+	if sliderDragging then
+
+		if input.UserInputType == Enum.UserInputType.MouseMovement
+			or input.UserInputType == Enum.UserInputType.Touch then
+
+			ChangeSpeed(input.Position.X)
+		end
+
+	end
+
+end)
+
+UIS.InputEnded:Connect(function(input)
+
+	if input.UserInputType == Enum.UserInputType.MouseButton1
+		or input.UserInputType == Enum.UserInputType.Touch then
+
+		sliderDragging = false
+	end
+
+end)
+
+y += 35
+
+--==================================================
+-- GOD MODE
+--==================================================
+
+local godButton = Button("🛡 GOD MODE", function(button)
+
+	GodMode = not GodMode
+
+	local hum = Humanoid()
+
+	if hum then
+		if GodMode then
+			hum.MaxHealth = math.huge
+			hum.Health = math.huge
+		else
+			hum.MaxHealth = 100
+			hum.Health = math.min(hum.Health, 100)
+		end
+	end
+
+	Toggle(button, "🛡 GOD MODE", GodMode)
+end)
+
+--==================================================
+-- AUTO HEAL
+--==================================================
+
+local healButton = Button("♥ AUTO HEAL", function(button)
+
+	AutoHeal = not AutoHeal
+
+	Toggle(button, "♥ AUTO HEAL", AutoHeal)
+end)
+
+task.spawn(function()
+
+	while task.wait(0.15) do
+
+		if AutoHeal then
+
+			local hum = Humanoid()
+
+			if hum and hum.Health > 0 then
+				hum.Health = hum.MaxHealth
+			end
+
+		end
+
+	end
+
+end)
+
+--==================================================
+-- INFINITE SHOOT
+--==================================================
+
+local shootButton = Button("∞ SHOOT INFINITY", function(button)
+
+	InfiniteShoot = not InfiniteShoot
+
+	Toggle(button, "∞ SHOOT INFINITY", InfiniteShoot)
+
+end)
+
+--==================================================
+-- AUTO PARRY
+--==================================================
+
+local parryButton = Button("⚔ AUTO PARRY", function(button)
+
+	AutoParry = not AutoParry
+
+	Toggle(button, "⚔ AUTO PARRY", AutoParry)
+
+end)
+
+--==================================================
+-- AIM ASSIST
+--==================================================
+
+local function GetTarget(role)
+
+	local myRoot = Root()
+
+	if not myRoot then
+		return nil
+	end
+
+	local closest = nil
+	local distance = math.huge
+
+	for _, target in ipairs(Players:GetPlayers()) do
+
+		if target ~= player then
+
+			local char = target.Character
+			local targetRoot =
+				char and char:FindFirstChild("HumanoidRootPart")
+
+			if targetRoot then
+
+				local targetRole =
+					target:GetAttribute("Role")
+
+				if targetRole == role then
+
+					local d =
+						(targetRoot.Position - myRoot.Position).Magnitude
+
+					if d < distance then
+						distance = d
+						closest = targetRoot
+					end
+
+				end
+
+			end
+
+		end
+
+	end
+
+	return closest
+end
+
+local aimConnection
+
+local function UpdateAim()
+
+	local target
+
+	if AimSurvivor then
+		target = GetTarget("Survivor")
+	elseif AimKiller then
+		target = GetTarget("Killer")
+	end
+
+	if target then
+
+		local camera = workspace.CurrentCamera
+
+		camera.CFrame = CFrame.lookAt(
+			camera.CFrame.Position,
+			target.Position
+		)
+
+	end
+end
+
+local aimSurvivorButton = Button("🎯 AIM SURVIVOR", function(button)
+
+	AimSurvivor = not AimSurvivor
+
+	if AimSurvivor then
+		AimKiller = false
+	end
+
+	if AimSurvivor or AimKiller then
+
+		if not aimConnection then
+			aimConnection =
+				RunService.RenderStepped:Connect(UpdateAim)
+		end
+
+	else
+
+		if aimConnection then
+			aimConnection:Disconnect()
+			aimConnection = nil
+		end
+
+	end
+
+	Toggle(button, "🎯 AIM SURVIVOR", AimSurvivor)
+
+end)
+
+local aimKillerButton = Button("🎯 AIM KILLER", function(button)
+
+	AimKiller = not AimKiller
+
+	if AimKiller then
+		AimSurvivor = false
+	end
+
+	if AimKiller or AimSurvivor then
+
+		if not aimConnection then
+			aimConnection =
+				RunService.RenderStepped:Connect(UpdateAim)
+		end
+
+	else
+
+		if aimConnection then
+			aimConnection:Disconnect()
+			aimConnection = nil
+		end
+
+	end
+
+	Toggle(button, "🎯 AIM KILLER", AimKiller)
+
+end)
+
+--==================================================
+-- ESP
+--==================================================
+
+local espFolder = Instance.new("Folder")
+espFolder.Name = "VD_AdminESP"
+espFolder.Parent = gui
+
+local espObjects = {}
+
+local function ClearESP()
+
+	for _, obj in pairs(espObjects) do
+		if obj then
+			obj:Destroy()
+		end
+	end
+
+	espObjects = {}
+
+end
+
+local function MakeESP(obj, label)
+
+	if not obj then
+		return
+	end
+
+	local highlight = Instance.new("Highlight")
+	highlight.Name = "VD_ESP"
+	highlight.FillColor = BLUE
+	highlight.FillTransparency = 0.75
+	highlight.OutlineColor = WHITE
+	highlight.OutlineTransparency = 0
+	highlight.Adornee = obj
+	highlight.Parent = espFolder
+
+	espObjects[obj] = highlight
+
+end
+
+local function RefreshESP()
+
+	ClearESP()
+
+	-- Players
+	for _, target in ipairs(Players:GetPlayers()) do
+
+		if target ~= player and target.Character then
+
+			local role = target:GetAttribute("Role")
+
+			if role == "Survivor" and ESP.Survivor then
+				MakeESP(target.Character, "Survivor")
+			end
+
+			if role == "Killer" and ESP.Killer then
+				MakeESP(target.Character, "Killer")
+			end
+
+		end
+
+	end
+
+	-- Map objects
+	local tags = {
+		Hook = "Hook",
+		Generator = "Generator",
+		Pallet = "Pallet",
+		Window = "Window",
+		SCP = "SCP",
+		Zombie = "Zombie",
+		Gate = "Gate"
+	}
+
+	for tag, setting in pairs(tags) do
+
+		if ESP[setting] then
+
+			for _, obj in ipairs(
+				CollectionService:GetTagged(tag)
+			) do
+
+				MakeESP(obj, tag)
+
+			end
+
+		end
+
+	end
+
+end
+
+local function ESPButton(tag)
+
+	local button = Button("👁 ESP " .. string.upper(tag), function(b)
+
+		ESP[tag] = not ESP[tag]
+
+		RefreshESP()
+
+		Toggle(
+			b,
+			"👁 ESP " .. string.upper(tag),
+			ESP[tag]
+		)
+
+	end)
+
+	return button
+end
+
+ESPButton("Survivor")
+ESPButton("Killer")
+ESPButton("Hook")
+ESPButton("Generator")
+ESPButton("Pallet")
+ESPButton("Window")
+ESPButton("SCP")
+ESPButton("Zombie")
+ESPButton("Gate")
+
+--==================================================
+-- NO FOG
+--==================================================
+
+local fogButton = Button("☁ NO FOG", function(button)
+
+	NoFog = not NoFog
+
+	if NoFog then
+
+		Lighting.FogEnd = 1000000
+		Lighting.FogStart = 0
+
+	else
+
+		Lighting.FogEnd = 1000
+		Lighting.FogStart = 0
+
+	end
+
+	Toggle(button, "☁ NO FOG", NoFog)
+
+end)
+
+--==================================================
+-- FULLBRIGHT
+--==================================================
+
+local brightButton = Button("☀ FULLBRIGHT", function(button)
+
+	FullBright = not FullBright
+
+	if FullBright then
+
+		Lighting.Brightness = 3
+		Lighting.ClockTime = 14
+		Lighting.GlobalShadows = false
+		Lighting.Ambient = Color3.new(1, 1, 1)
+		Lighting.OutdoorAmbient = Color3.new(1, 1, 1)
+
+	else
+
+		Lighting.Brightness = 1
+		Lighting.GlobalShadows = true
+		Lighting.Ambient = Color3.fromRGB(70, 70, 70)
+		Lighting.OutdoorAmbient = Color3.fromRGB(70, 70, 70)
+
+	end
+
+	Toggle(button, "☀ FULLBRIGHT", FullBright)
+
+end)
+
+--==================================================
+-- FPS BOOST
+--==================================================
+
+local fpsButton = Button("⚡ FPS BOOST", function(button)
+
+	FPSBoost = not FPSBoost
+
+	if FPSBoost then
+
+		for _, obj in ipairs(workspace:GetDescendants()) do
+
+			if obj:IsA("ParticleEmitter")
+				or obj:IsA("Trail")
+				or obj:IsA("Beam") then
+
+				obj.Enabled = false
+
+			elseif obj:IsA("Decal") then
+
+				obj.Transparency = math.max(
+					obj.Transparency,
+					0.15
+				)
+
+			end
+
+		end
+
+	end
+
+	Toggle(button, "⚡ FPS BOOST", FPSBoost)
+
+end)
+
+--==================================================
+-- INSTANT GENERATOR
+--==================================================
+
+local generatorButton = Button(
+	"⚡ INSTANT GENERATOR",
+	function(button)
+
+		InstantGenerator = not InstantGenerator
+
+		Toggle(
+			button,
+			"⚡ INSTANT GENERATOR",
+			InstantGenerator
+		)
+
+		-- Generator interaction must be connected
+		-- to your game's generator system.
+	end
+)
+
+--==================================================
+-- TELEPORT
+--==================================================
+
+local function TeleportToRole(role)
+
+	local target = GetTarget(role)
+
+	if target and Root() then
+
+		Root().CFrame =
+			target.CFrame + Vector3.new(0, 3, 0)
+
+	end
+
+end
+
+local tpSurvivor = Button(
+	"→ TELEPORT SURVIVOR",
+	function()
+		TeleportToRole("Survivor")
+	end
+)
+
+local tpKiller = Button(
+	"→ TELEPORT KILLER",
+	function()
+		TeleportToRole("Killer")
+	end
+)
+
+local tpGate = Button(
+	"→ TELEPORT GATE",
+	function()
+
+		local gates =
+			CollectionService:GetTagged("Gate")
+
+		if #gates > 0 and Root() then
+
+			local gate = gates[1]
+
+			if gate:IsA("BasePart") then
+				Root().CFrame =
+					gate.CFrame + Vector3.new(0, 3, 0)
+
+			elseif gate:IsA("Model") then
+
+				local part =
+					gate.PrimaryPart
+					or gate:FindFirstChildWhichIsA(
+						"BasePart"
+					)
+
+				if part then
+					Root().CFrame =
+						part.CFrame +
+						Vector3.new(0, 3, 0)
+				end
+
+			end
+
+		end
+
+	end
+)
+
+--==================================================
+-- RESPAWN
+--==================================================
+
+player.CharacterAdded:Connect(function()
+
+	task.wait(0.5)
+
+	local hum = Humanoid()
+
+	if hum then
+		hum.WalkSpeed = WalkSpeed
+	end
+
+	if GodMode then
+
+		hum.MaxHealth = math.huge
+		hum.Health = math.huge
+
+	end
+
+end)
