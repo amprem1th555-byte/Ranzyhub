@@ -1,0 +1,643 @@
+local Players = game:GetService("Players")
+local UIS = game:GetService("UserInputService")
+local Lighting = game:GetService("Lighting")
+local RunService = game:GetService("RunService")
+
+local LocalPlayer = Players.LocalPlayer
+
+--// OWNER
+local OWNER_ID = 10966656598
+
+if LocalPlayer.UserId ~= OWNER_ID then
+	return
+end
+
+--==================================================
+-- SETTINGS
+--==================================================
+
+local Config = {
+	WalkSpeed = 16,
+	NoClip = false,
+	GodMode = false,
+	AutoHeal = false,
+
+	ESP_Survivor = false,
+	ESP_Killer = false,
+	ESP_Object = false,
+
+	FullBright = false,
+	NoFog = false,
+	FPSBoost = false,
+
+	AutoParry = false,
+	AutoAttack = false,
+}
+
+--==================================================
+-- GUI
+--==================================================
+
+local Gui = Instance.new("ScreenGui")
+Gui.Name = "CompactAdminHub"
+Gui.ResetOnSpawn = false
+Gui.IgnoreGuiInset = true
+Gui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+
+-- Main
+local Main = Instance.new("Frame")
+Main.Name = "Main"
+Main.Parent = Gui
+Main.Size = UDim2.fromOffset(690, 440)
+Main.Position = UDim2.new(0.5, -345, 0.5, -220)
+Main.BackgroundColor3 = Color3.fromRGB(8, 10, 16)
+Main.BackgroundTransparency = 0.04
+Main.BorderSizePixel = 0
+
+local MainCorner = Instance.new("UICorner")
+MainCorner.CornerRadius = UDim.new(0, 14)
+MainCorner.Parent = Main
+
+local Stroke = Instance.new("UIStroke")
+Stroke.Color = Color3.fromRGB(90, 45, 150)
+Stroke.Thickness = 1.5
+Stroke.Transparency = 0.15
+Stroke.Parent = Main
+
+--==================================================
+-- TOP BAR
+--==================================================
+
+local Top = Instance.new("Frame")
+Top.Parent = Main
+Top.Size = UDim2.new(1, 0, 0, 62)
+Top.BackgroundTransparency = 1
+
+local Title = Instance.new("TextLabel")
+Title.Parent = Top
+Title.Position = UDim2.fromOffset(20, 8)
+Title.Size = UDim2.fromOffset(150, 25)
+Title.BackgroundTransparency = 1
+Title.Text = "Violence District"
+Title.TextColor3 = Color3.fromRGB(220, 200, 255)
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 18
+Title.TextXAlignment = Enum.TextXAlignment.Left
+
+local SubTitle = Instance.new("TextLabel")
+SubTitle.Parent = Top
+SubTitle.Position = UDim2.fromOffset(20, 32)
+SubTitle.Size = UDim2.fromOffset(190, 20)
+SubTitle.BackgroundTransparency = 1
+SubTitle.Text = "Peaceful Community"
+SubTitle.TextColor3 = Color3.fromRGB(130, 130, 145)
+SubTitle.Font = Enum.Font.Gotham
+SubTitle.TextSize = 11
+SubTitle.TextXAlignment = Enum.TextXAlignment.Left
+
+-- Minimize
+local Minimize = Instance.new("TextButton")
+Minimize.Parent = Top
+Minimize.Size = UDim2.fromOffset(38, 38)
+Minimize.Position = UDim2.new(1, -82, 0, 12)
+Minimize.BackgroundTransparency = 1
+Minimize.Text = "—"
+Minimize.TextColor3 = Color3.fromRGB(190, 190, 200)
+Minimize.Font = Enum.Font.GothamBold
+Minimize.TextSize = 22
+
+-- Close
+local Close = Instance.new("TextButton")
+Close.Parent = Top
+Close.Size = UDim2.fromOffset(38, 38)
+Close.Position = UDim2.new(1, -44, 0, 12)
+Close.BackgroundTransparency = 1
+Close.Text = "×"
+Close.TextColor3 = Color3.fromRGB(220, 220, 230)
+Close.Font = Enum.Font.Gotham
+Close.TextSize = 28
+
+--==================================================
+-- SEARCH
+--==================================================
+
+local Search = Instance.new("TextBox")
+Search.Parent = Main
+Search.Position = UDim2.fromOffset(18, 72)
+Search.Size = UDim2.fromOffset(205, 38)
+Search.BackgroundColor3 = Color3.fromRGB(17, 19, 28)
+Search.PlaceholderText = "⌕  Search..."
+Search.PlaceholderColor3 = Color3.fromRGB(120, 120, 135)
+Search.Text = ""
+Search.TextColor3 = Color3.fromRGB(230, 230, 235)
+Search.Font = Enum.Font.Gotham
+Search.TextSize = 13
+Search.ClearTextOnFocus = false
+
+local SearchCorner = Instance.new("UICorner")
+SearchCorner.CornerRadius = UDim.new(0, 9)
+SearchCorner.Parent = Search
+
+local SearchStroke = Instance.new("UIStroke")
+SearchStroke.Color = Color3.fromRGB(70, 55, 100)
+SearchStroke.Parent = Search
+
+--==================================================
+-- SIDEBAR
+--==================================================
+
+local Sidebar = Instance.new("Frame")
+Sidebar.Parent = Main
+Sidebar.Position = UDim2.fromOffset(12, 120)
+Sidebar.Size = UDim2.fromOffset(215, 265)
+Sidebar.BackgroundTransparency = 1
+
+local SidebarLayout = Instance.new("UIListLayout")
+SidebarLayout.Parent = Sidebar
+SidebarLayout.Padding = UDim.new(0, 5)
+SidebarLayout.SortOrder = Enum.SortOrder.LayoutOrder
+
+--==================================================
+-- CONTENT
+--==================================================
+
+local Content = Instance.new("ScrollingFrame")
+Content.Parent = Main
+Content.Position = UDim2.fromOffset(240, 72)
+Content.Size = UDim2.new(1, -255, 1, -90)
+Content.BackgroundTransparency = 1
+Content.BorderSizePixel = 0
+Content.ScrollBarThickness = 3
+Content.ScrollBarImageColor3 = Color3.fromRGB(115, 65, 180)
+Content.CanvasSize = UDim2.new()
+
+local ContentLayout = Instance.new("UIListLayout")
+ContentLayout.Parent = Content
+ContentLayout.Padding = UDim.new(0, 8)
+
+ContentLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+	Content.CanvasSize = UDim2.fromOffset(
+		0,
+		ContentLayout.AbsoluteContentSize.Y + 10
+	)
+end)
+
+--==================================================
+-- USERNAME
+--==================================================
+
+local UserLabel = Instance.new("TextLabel")
+UserLabel.Parent = Main
+UserLabel.Position = UDim2.new(0, 20, 1, -42)
+UserLabel.Size = UDim2.fromOffset(205, 25)
+UserLabel.BackgroundTransparency = 1
+UserLabel.Text = "●  Welcome, @" .. LocalPlayer.Name
+UserLabel.TextColor3 = Color3.fromRGB(145, 145, 155)
+UserLabel.Font = Enum.Font.Gotham
+UserLabel.TextSize = 11
+UserLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+--==================================================
+-- FLOATING ICON
+--==================================================
+
+local Float = Instance.new("ImageButton")
+Float.Parent = Gui
+Float.Size = UDim2.fromOffset(54, 54)
+Float.Position = UDim2.new(0, 18, 0.5, -27)
+Float.BackgroundColor3 = Color3.fromRGB(15, 12, 23)
+Float.Image = ""
+Float.Visible = false
+
+local FloatCorner = Instance.new("UICorner")
+FloatCorner.CornerRadius = UDim.new(1, 0)
+FloatCorner.Parent = Float
+
+local FloatStroke = Instance.new("UIStroke")
+FloatStroke.Color = Color3.fromRGB(130, 70, 210)
+FloatStroke.Thickness = 2
+FloatStroke.Parent = Float
+
+local FloatText = Instance.new("TextLabel")
+FloatText.Parent = Float
+FloatText.Size = UDim2.fromScale(1, 1)
+FloatText.BackgroundTransparency = 1
+FloatText.Text = "VD"
+FloatText.TextColor3 = Color3.fromRGB(220, 190, 255)
+FloatText.Font = Enum.Font.GothamBold
+FloatText.TextSize = 16
+
+--==================================================
+-- DRAG SYSTEM
+--==================================================
+
+local function MakeDraggable(obj, handle)
+	local dragging = false
+	local dragStart
+	local startPos
+
+	handle = handle or obj
+
+	handle.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1
+			or input.UserInputType == Enum.UserInputType.Touch then
+
+			dragging = true
+			dragStart = input.Position
+			startPos = obj.Position
+
+			input.Changed:Connect(function()
+				if input.UserInputState == Enum.UserInputState.End then
+					dragging = false
+				end
+			end)
+		end
+	end)
+
+	UIS.InputChanged:Connect(function(input)
+		if dragging and (
+			input.UserInputType == Enum.UserInputType.MouseMovement
+			or input.UserInputType == Enum.UserInputType.Touch
+		) then
+
+			local delta = input.Position - dragStart
+
+			obj.Position = UDim2.new(
+				startPos.X.Scale,
+				startPos.X.Offset + delta.X,
+				startPos.Y.Scale,
+				startPos.Y.Offset + delta.Y
+			)
+		end
+	end)
+end
+
+MakeDraggable(Main, Top)
+MakeDraggable(Float)
+
+--==================================================
+-- UI FUNCTIONS
+--==================================================
+
+local function ClearContent()
+	for _, child in ipairs(Content:GetChildren()) do
+		if child:IsA("GuiObject") then
+			child:Destroy()
+		end
+	end
+end
+
+local function CreateSection(text)
+	local Label = Instance.new("TextLabel")
+	Label.Parent = Content
+	Label.Size = UDim2.new(1, -8, 0, 25)
+	Label.BackgroundTransparency = 1
+	Label.Text = text
+	Label.TextColor3 = Color3.fromRGB(165, 115, 230)
+	Label.Font = Enum.Font.GothamBold
+	Label.TextSize = 13
+	Label.TextXAlignment = Enum.TextXAlignment.Left
+
+	return Label
+end
+
+local function CreateButton(text, callback)
+	local Button = Instance.new("TextButton")
+	Button.Parent = Content
+	Button.Size = UDim2.new(1, -8, 0, 42)
+	Button.BackgroundColor3 = Color3.fromRGB(18, 20, 29)
+	Button.Text = text
+	Button.TextColor3 = Color3.fromRGB(225, 225, 230)
+	Button.Font = Enum.Font.GothamMedium
+	Button.TextSize = 13
+	Button.TextXAlignment = Enum.TextXAlignment.Left
+	Button.AutoButtonColor = false
+
+	local Padding = Instance.new("UIPadding")
+	Padding.Parent = Button
+	Padding.PaddingLeft = UDim.new(0, 14)
+
+	local Corner = Instance.new("UICorner")
+	Corner.CornerRadius = UDim.new(0, 9)
+	Corner.Parent = Button
+
+	Button.MouseEnter:Connect(function()
+		Button.BackgroundColor3 = Color3.fromRGB(28, 25, 39)
+	end)
+
+	Button.MouseLeave:Connect(function()
+		Button.BackgroundColor3 = Color3.fromRGB(18, 20, 29)
+	end)
+
+	Button.MouseButton1Click:Connect(function()
+		if callback then
+			callback()
+		end
+	end)
+
+	return Button
+end
+
+local function CreateToggle(text, configName, callback)
+	local Button = Instance.new("TextButton")
+	Button.Parent = Content
+	Button.Size = UDim2.new(1, -8, 0, 42)
+	Button.BackgroundColor3 = Color3.fromRGB(18, 20, 29)
+	Button.Text = ""
+	Button.AutoButtonColor = false
+
+	local Corner = Instance.new("UICorner")
+	Corner.CornerRadius = UDim.new(0, 9)
+	Corner.Parent = Button
+
+	local Label = Instance.new("TextLabel")
+	Label.Parent = Button
+	Label.Position = UDim2.fromOffset(14, 0)
+	Label.Size = UDim2.new(1, -75, 1, 0)
+	Label.BackgroundTransparency = 1
+	Label.Text = text
+	Label.TextColor3 = Color3.fromRGB(225, 225, 230)
+	Label.Font = Enum.Font.GothamMedium
+	Label.TextSize = 13
+	Label.TextXAlignment = Enum.TextXAlignment.Left
+
+	local Status = Instance.new("TextLabel")
+	Status.Parent = Button
+	Status.Size = UDim2.fromOffset(50, 42)
+	Status.Position = UDim2.new(1, -58, 0, 0)
+	Status.BackgroundTransparency = 1
+	Status.Font = Enum.Font.GothamBold
+	Status.TextSize = 11
+
+	local function Update()
+		local state = Config[configName]
+
+		if state then
+			Status.Text = "ON"
+			Status.TextColor3 = Color3.fromRGB(170, 100, 255)
+			Button.BackgroundColor3 = Color3.fromRGB(29, 22, 42)
+		else
+			Status.Text = "OFF"
+			Status.TextColor3 = Color3.fromRGB(100, 100, 110)
+			Button.BackgroundColor3 = Color3.fromRGB(18, 20, 29)
+		end
+	end
+
+	Button.MouseButton1Click:Connect(function()
+		Config[configName] = not Config[configName]
+		Update()
+
+		if callback then
+			callback(Config[configName])
+		end
+	end)
+
+	Update()
+
+	return Button
+end
+
+--==================================================
+-- FEATURES
+--==================================================
+
+local function SetWalkSpeed()
+	local char = LocalPlayer.Character
+	local hum = char and char:FindFirstChildOfClass("Humanoid")
+
+	if hum then
+		hum.WalkSpeed = Config.WalkSpeed
+	end
+end
+
+local function SetFullBright(enabled)
+	if enabled then
+		Lighting.Brightness = 2
+		Lighting.ClockTime = 14
+		Lighting.FogEnd = 100000
+		Lighting.GlobalShadows = false
+	else
+		Lighting.Brightness = 1
+		Lighting.GlobalShadows = true
+	end
+end
+
+local function SetNoClip(enabled)
+	if not enabled then
+		return
+	end
+
+	RunService.Stepped:Connect(function()
+		if not Config.NoClip then
+			return
+		end
+
+		local char = LocalPlayer.Character
+		if char then
+			for _, part in ipairs(char:GetDescendants()) do
+				if part:IsA("BasePart") then
+					part.CanCollide = false
+				end
+			end
+		end
+	end)
+end
+
+SetNoClip(true)
+
+LocalPlayer.CharacterAdded:Connect(function()
+	task.wait(0.5)
+	SetWalkSpeed()
+end)
+
+--==================================================
+-- TABS
+--==================================================
+
+local CurrentTab = "Info"
+
+local function CreateTab(name)
+	local Button = Instance.new("TextButton")
+	Button.Parent = Sidebar
+	Button.Size = UDim2.new(1, 0, 0, 42)
+	Button.BackgroundColor3 = Color3.fromRGB(15, 17, 25)
+	Button.Text = "   " .. name
+	Button.TextColor3 = Color3.fromRGB(210, 210, 220)
+	Button.Font = Enum.Font.GothamMedium
+	Button.TextSize = 13
+	Button.TextXAlignment = Enum.TextXAlignment.Left
+	Button.AutoButtonColor = false
+
+	local Corner = Instance.new("UICorner")
+	Corner.CornerRadius = UDim.new(0, 8)
+	Corner.Parent = Button
+
+	Button.MouseButton1Click:Connect(function()
+		CurrentTab = name
+
+		for _, b in ipairs(Sidebar:GetChildren()) do
+			if b:IsA("TextButton") then
+				b.BackgroundColor3 = Color3.fromRGB(15, 17, 25)
+			end
+		end
+
+		Button.BackgroundColor3 = Color3.fromRGB(35, 25, 50)
+
+		ClearContent()
+
+		-- INFO
+		if name == "Info" then
+			CreateSection("OWNER / DEBUG PANEL")
+
+			CreateButton("Violence District", function() end)
+			CreateButton("Owner ID: " .. OWNER_ID, function() end)
+			CreateButton("Welcome, @" .. LocalPlayer.Name, function() end)
+
+		-- PLAYER
+		elseif name == "Player" then
+			CreateSection("PLAYER")
+
+			CreateToggle("No Clip", "NoClip", function() end)
+			CreateToggle("God Mode", "GodMode", function() end)
+			CreateToggle("Auto Heal", "AutoHeal", function() end)
+
+			CreateButton("WalkSpeed: " .. Config.WalkSpeed, function()
+				Config.WalkSpeed = 50
+				SetWalkSpeed()
+			end)
+
+			CreateButton("Reset WalkSpeed", function()
+				Config.WalkSpeed = 16
+				SetWalkSpeed()
+			end)
+
+		-- VISUAL
+		elseif name == "Visual" then
+			CreateSection("ESP")
+
+			CreateToggle("Survivor ESP", "ESP_Survivor", function() end)
+			CreateToggle("Killer ESP", "ESP_Killer", function() end)
+			CreateToggle("Object ESP", "ESP_Object", function() end)
+
+			CreateSection("VISUAL")
+
+			CreateToggle("Full Bright", "FullBright", function(v)
+				SetFullBright(v)
+			end)
+
+			CreateToggle("No Fog", "NoFog", function(v)
+				Lighting.FogEnd = v and 100000 or 1000
+			end)
+
+			CreateToggle("FPS Boost", "FPSBoost", function() end)
+
+		-- GAME
+		elseif name == "Game" then
+			CreateSection("GAME")
+
+			CreateToggle("Auto Parry", "AutoParry", function() end)
+			CreateToggle("Auto Attack", "AutoAttack", function() end)
+
+			CreateButton("Teleport → Spawn", function()
+				local char = LocalPlayer.Character
+				local root = char and char:FindFirstChild("HumanoidRootPart")
+				local spawn = workspace:FindFirstChildOfClass("SpawnLocation")
+
+				if root and spawn then
+					root.CFrame = spawn.CFrame + Vector3.new(0, 3, 0)
+				end
+			end)
+
+			CreateButton("Refresh Character", function()
+				LocalPlayer:LoadCharacter()
+			end)
+		end
+	end)
+
+	return Button
+end
+
+CreateTab("Info")
+CreateTab("Player")
+CreateTab("Visual")
+CreateTab("Game")
+
+-- Open Info initially
+task.defer(function()
+	local first = Sidebar:FindFirstChildWhichIsA("TextButton")
+	if first then
+		first.BackgroundColor3 = Color3.fromRGB(35, 25, 50)
+		first:Activate()
+	end
+end)
+
+--==================================================
+-- SEARCH
+--==================================================
+
+Search:GetPropertyChangedSignal("Text"):Connect(function()
+	local query = string.lower(Search.Text)
+
+	for _, obj in ipairs(Content:GetChildren()) do
+		if obj:IsA("TextButton") or obj:IsA("TextLabel") then
+			local text = string.lower(obj.Text or "")
+
+			if query == "" then
+				obj.Visible = true
+			else
+				obj.Visible = string.find(text, query, 1, true) ~= nil
+			end
+		end
+	end
+end)
+
+--==================================================
+-- MINIMIZE / CLOSE
+--==================================================
+
+Minimize.MouseButton1Click:Connect(function()
+	Main.Visible = false
+	Float.Visible = true
+end)
+
+Float.MouseButton1Click:Connect(function()
+	Main.Visible = true
+	Float.Visible = false
+end)
+
+Close.MouseButton1Click:Connect(function()
+	Gui:Destroy()
+end)
+
+--==================================================
+-- KEEP SPEED
+--==================================================
+
+RunService.Heartbeat:Connect(function()
+	if Config.WalkSpeed then
+		local char = LocalPlayer.Character
+		local hum = char and char:FindFirstChildOfClass("Humanoid")
+
+		if hum and hum.WalkSpeed ~= Config.WalkSpeed then
+			hum.WalkSpeed = Config.WalkSpeed
+		end
+	end
+
+	if Config.GodMode then
+		local char = LocalPlayer.Character
+		local hum = char and char:FindFirstChildOfClass("Humanoid")
+
+		if hum then
+			hum.Health = hum.MaxHealth
+		end
+	end
+
+	if Config.AutoHeal then
+		local char = LocalPlayer.Character
+		local hum = char and char:FindFirstChildOfClass("Humanoid")
+
+		if hum and hum.Health < hum.MaxHealth then
+			hum.Health = hum.MaxHealth
+		end
+	end
+end)
