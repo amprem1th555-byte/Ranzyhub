@@ -1,0 +1,790 @@
+local Players = game:GetService("Players")
+local UIS = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+
+local Player = Players.LocalPlayer
+local PlayerGui = Player:WaitForChild("PlayerGui")
+
+local MIN_SPEED = 1
+local MAX_SPEED = 100
+local DEFAULT_SPEED = 16
+
+local PURPLE = Color3.fromRGB(184,132,255)
+local BG = Color3.fromRGB(8,9,14)
+local CARD = Color3.fromRGB(22,23,31)
+local TEXT = Color3.fromRGB(240,240,245)
+local MUTED = Color3.fromRGB(150,145,165)
+
+local currentSpeed = DEFAULT_SPEED
+local noclipEnabled = false
+local xrayEnabled = false
+local espEnabled = false
+local originalTransparency = {}
+
+-- UI SIZE
+local uiScaleValue = 100
+local MIN_UI_SCALE = 75
+local MAX_UI_SCALE = 115
+local baseMainSize = Vector2.new(800, 465)
+
+local function applyUISize()
+	local scale = uiScaleValue / 100
+	Main.Size = UDim2.fromOffset(
+		math.floor(baseMainSize.X * scale),
+		math.floor(baseMainSize.Y * scale)
+	)
+end
+
+local Gui = Instance.new("ScreenGui")
+Gui.Name = "RAN_Hub"
+Gui.ResetOnSpawn = false
+Gui.IgnoreGuiInset = true
+Gui.Parent = PlayerGui
+
+local Main = Instance.new("Frame")
+Main.Size = UDim2.fromOffset(800,465)
+Main.Position = UDim2.new(.5,-400,.5,-232)
+Main.BackgroundColor3 = BG
+Main.BackgroundTransparency = .08
+Main.BorderSizePixel = 0
+Main.Parent = Gui
+
+Instance.new("UICorner",Main).CornerRadius = UDim.new(0,14)
+
+local stroke = Instance.new("UIStroke",Main)
+stroke.Color = PURPLE
+stroke.Transparency = .35
+stroke.Thickness = 1.5
+
+local Header = Instance.new("Frame",Main)
+Header.Size = UDim2.new(1,0,0,65)
+Header.BackgroundTransparency = 1
+
+local Logo = Instance.new("TextLabel",Header)
+Logo.Size = UDim2.fromOffset(35,40)
+Logo.Position = UDim2.fromOffset(20,12)
+Logo.BackgroundTransparency = 1
+Logo.Text = "M"
+Logo.TextColor3 = PURPLE
+Logo.TextSize = 25
+Logo.Font = Enum.Font.GothamBold
+
+local Title = Instance.new("TextLabel",Header)
+Title.Position = UDim2.fromOffset(62,10)
+Title.Size = UDim2.fromOffset(150,28)
+Title.BackgroundTransparency = 1
+Title.Text = "RAN Hub"
+Title.TextColor3 = PURPLE
+Title.TextSize = 19
+Title.Font = Enum.Font.GothamBold
+Title.TextXAlignment = Enum.TextXAlignment.Left
+
+local Community = Instance.new("TextLabel",Header)
+Community.Position = UDim2.fromOffset(170,12)
+Community.Size = UDim2.fromOffset(220,28)
+Community.BackgroundTransparency = 1
+Community.Text = "|   Peaceful Community"
+Community.TextColor3 = MUTED
+Community.TextSize = 14
+Community.Font = Enum.Font.Gotham
+Community.TextXAlignment = Enum.TextXAlignment.Left
+
+local function badge(text,pos,size)
+	local b=Instance.new("TextLabel",Header)
+	b.Size=UDim2.fromOffset(size,35)
+	b.Position=pos
+	b.BackgroundColor3=Color3.fromRGB(65,65,67)
+	b.Text=text
+	b.TextColor3=TEXT
+	b.TextSize=14
+	b.Font=Enum.Font.GothamBold
+	Instance.new("UICorner",b).CornerRadius=UDim.new(1,0)
+	return b
+end
+
+badge("VD | Free",UDim2.new(1,-285,0,15),100)
+badge("Studio",UDim2.new(1,-180,0,15),135)
+
+local Minimize=Instance.new("TextButton",Header)
+Minimize.Size=UDim2.fromOffset(35,35)
+Minimize.Position=UDim2.new(1,-75,0,15)
+Minimize.BackgroundTransparency=1
+Minimize.Text="—"
+Minimize.TextColor3=TEXT
+Minimize.TextSize=24
+
+local Close=Instance.new("TextButton",Header)
+Close.Size=UDim2.fromOffset(35,35)
+Close.Position=UDim2.new(1,-40,0,15)
+Close.BackgroundTransparency=1
+Close.Text="×"
+Close.TextColor3=TEXT
+Close.TextSize=28
+Close.MouseButton1Click:Connect(function() Gui.Enabled=false end)
+
+local Divider=Instance.new("Frame",Main)
+Divider.Position=UDim2.fromOffset(0,64)
+Divider.Size=UDim2.new(1,0,0,1)
+Divider.BackgroundColor3=Color3.fromRGB(65,65,75)
+Divider.BackgroundTransparency=.5
+Divider.BorderSizePixel=0
+
+local Sidebar=Instance.new("Frame",Main)
+Sidebar.Position=UDim2.fromOffset(15,78)
+Sidebar.Size=UDim2.fromOffset(215,370)
+Sidebar.BackgroundTransparency=1
+
+local Search=Instance.new("TextBox",Sidebar)
+Search.Size=UDim2.fromOffset(205,45)
+Search.Position=UDim2.fromOffset(5,0)
+Search.BackgroundColor3=CARD
+Search.Text=""
+Search.PlaceholderText="⌕  Search..."
+Search.PlaceholderColor3=MUTED
+Search.TextColor3=TEXT
+Search.TextSize=14
+Search.Font=Enum.Font.Gotham
+Instance.new("UICorner",Search).CornerRadius=UDim.new(0,9)
+
+local SideList=Instance.new("Frame",Sidebar)
+SideList.Position=UDim2.fromOffset(0,55)
+SideList.Size=UDim2.new(1,0,1,-55)
+SideList.BackgroundTransparency=1
+
+local sideLayout=Instance.new("UIListLayout",SideList)
+sideLayout.Padding=UDim.new(0,3)
+
+local Content=Instance.new("ScrollingFrame",Main)
+Content.Position=UDim2.fromOffset(245,78)
+Content.Size=UDim2.new(1,-260,1,-92)
+Content.BackgroundTransparency=1
+Content.BorderSizePixel=0
+Content.ScrollBarThickness=3
+Content.ScrollBarImageColor3=PURPLE
+Content.CanvasSize=UDim2.new()
+Content.AutomaticCanvasSize=Enum.AutomaticSize.Y
+
+local contentLayout=Instance.new("UIListLayout",Content)
+contentLayout.Padding=UDim.new(0,8)
+
+local function getHumanoid()
+	local c=Player.Character
+	return c and c:FindFirstChildOfClass("Humanoid")
+end
+
+local function applyWalkSpeed()
+	local h=getHumanoid()
+	if h then h.WalkSpeed=currentSpeed end
+end
+
+Player.CharacterAdded:Connect(function()
+	task.wait(.5)
+	applyWalkSpeed()
+end)
+
+local function clearContent()
+	for _,v in ipairs(Content:GetChildren()) do
+		if not v:IsA("UIListLayout") then v:Destroy() end
+	end
+end
+
+local function addTitle(text)
+	local l=Instance.new("TextLabel",Content)
+	l.Size=UDim2.new(1,-10,0,38)
+	l.BackgroundTransparency=1
+	l.Text=text
+	l.TextColor3=PURPLE
+	l.TextSize=18
+	l.Font=Enum.Font.GothamBold
+	l.TextXAlignment=Enum.TextXAlignment.Left
+end
+
+local function addCard(height)
+	local c=Instance.new("Frame",Content)
+	c.Size=UDim2.new(1,-8,0,height)
+	c.BackgroundColor3=CARD
+	c.BackgroundTransparency=.08
+	c.BorderSizePixel=0
+	Instance.new("UICorner",c).CornerRadius=UDim.new(0,9)
+	return c
+end
+
+local function addToggle(text,callback)
+	local card=addCard(52)
+
+	local label=Instance.new("TextLabel",card)
+	label.Position=UDim2.fromOffset(16,0)
+	label.Size=UDim2.new(1,-75,1,0)
+	label.BackgroundTransparency=1
+	label.Text=text
+	label.TextColor3=TEXT
+	label.TextSize=15
+	label.Font=Enum.Font.GothamMedium
+	label.TextXAlignment=Enum.TextXAlignment.Left
+
+	local button=Instance.new("TextButton",card)
+	button.Size=UDim2.fromOffset(48,27)
+	button.Position=UDim2.new(1,-62,.5,-13)
+	button.BackgroundColor3=Color3.fromRGB(55,55,62)
+	button.Text=""
+	Instance.new("UICorner",button).CornerRadius=UDim.new(1,0)
+
+	local circle=Instance.new("Frame",button)
+	circle.Size=UDim2.fromOffset(21,21)
+	circle.Position=UDim2.fromOffset(3,3)
+	circle.BackgroundColor3=Color3.fromRGB(225,225,225)
+	Instance.new("UICorner",circle).CornerRadius=UDim.new(1,0)
+
+	local enabled=false
+	button.MouseButton1Click:Connect(function()
+		enabled=not enabled
+		if enabled then
+			button.BackgroundColor3=PURPLE
+			circle.Position=UDim2.new(1,-24,0,3)
+		else
+			button.BackgroundColor3=Color3.fromRGB(55,55,62)
+			circle.Position=UDim2.fromOffset(3,3)
+		end
+		if callback then callback(enabled) end
+	end)
+end
+
+local function addWalkSpeedSlider()
+	local card=addCard(78)
+
+	local valueLabel=Instance.new("TextLabel",card)
+	valueLabel.Position=UDim2.fromOffset(16,8)
+	valueLabel.Size=UDim2.new(1,-32,0,25)
+	valueLabel.BackgroundTransparency=1
+	valueLabel.Text="WalkSpeed                         "..currentSpeed
+	valueLabel.TextColor3=TEXT
+	valueLabel.TextSize=15
+	valueLabel.Font=Enum.Font.GothamMedium
+	valueLabel.TextXAlignment=Enum.TextXAlignment.Left
+
+	local bar=Instance.new("Frame",card)
+	bar.Position=UDim2.fromOffset(16,47)
+	bar.Size=UDim2.new(1,-32,0,7)
+	bar.BackgroundColor3=Color3.fromRGB(50,51,60)
+	bar.BorderSizePixel=0
+	Instance.new("UICorner",bar).CornerRadius=UDim.new(1,0)
+
+	local p=(currentSpeed-1)/99
+
+	local fill=Instance.new("Frame",bar)
+	fill.Size=UDim2.new(p,0,1,0)
+	fill.BackgroundColor3=PURPLE
+	fill.BorderSizePixel=0
+	Instance.new("UICorner",fill).CornerRadius=UDim.new(1,0)
+
+	local knob=Instance.new("TextButton",bar)
+	knob.Size=UDim2.fromOffset(19,19)
+	knob.Position=UDim2.new(p,-9,.5,-9)
+	knob.BackgroundColor3=Color3.fromRGB(240,240,245)
+	knob.Text=""
+	Instance.new("UICorner",knob).CornerRadius=UDim.new(1,0)
+
+	local dragging=false
+
+	local function setValue(x)
+		local percent=math.clamp((x-bar.AbsolutePosition.X)/bar.AbsoluteSize.X,0,1)
+		currentSpeed=math.floor(1+percent*99+.5)
+		fill.Size=UDim2.new(percent,0,1,0)
+		knob.Position=UDim2.new(percent,-9,.5,-9)
+		valueLabel.Text="WalkSpeed                         "..currentSpeed
+		applyWalkSpeed()
+	end
+
+	knob.MouseButton1Down:Connect(function() dragging=true end)
+
+	bar.InputBegan:Connect(function(input)
+		if input.UserInputType==Enum.UserInputType.MouseButton1
+			or input.UserInputType==Enum.UserInputType.Touch then
+			dragging=true
+			setValue(input.Position.X)
+		end
+	end)
+
+	UIS.InputChanged:Connect(function(input)
+		if dragging and (input.UserInputType==Enum.UserInputType.MouseMovement
+			or input.UserInputType==Enum.UserInputType.Touch) then
+			setValue(input.Position.X)
+		end
+	end)
+
+	UIS.InputEnded:Connect(function(input)
+		if input.UserInputType==Enum.UserInputType.MouseButton1
+			or input.UserInputType==Enum.UserInputType.Touch then
+			dragging=false
+		end
+	end)
+end
+
+local function setNoclip(state)
+	noclipEnabled=state
+	if not state then
+		local c=Player.Character
+		if c then
+			for _,v in ipairs(c:GetDescendants()) do
+				if v:IsA("BasePart") then v.CanCollide=true end
+			end
+		end
+	end
+end
+
+RunService.Stepped:Connect(function()
+	if not noclipEnabled then return end
+	local c=Player.Character
+	if c then
+		for _,v in ipairs(c:GetDescendants()) do
+			if v:IsA("BasePart") then v.CanCollide=false end
+		end
+	end
+end)
+
+local function setXRay(state)
+	xrayEnabled=state
+
+	if state then
+		for _,v in ipairs(workspace:GetDescendants()) do
+			if v:IsA("BasePart") and not (Player.Character and v:IsDescendantOf(Player.Character)) then
+				if originalTransparency[v]==nil then
+					originalTransparency[v]=v.LocalTransparencyModifier
+				end
+				v.LocalTransparencyModifier=.65
+			end
+		end
+	else
+		for obj,value in pairs(originalTransparency) do
+			if obj and obj.Parent then obj.LocalTransparencyModifier=value end
+		end
+		table.clear(originalTransparency)
+	end
+end
+
+local function removeESP()
+	for _,p in ipairs(Players:GetPlayers()) do
+		if p.Character then
+			local h=p.Character:FindFirstChild("RAN_ESP")
+			if h then h:Destroy() end
+
+			local head=p.Character:FindFirstChild("Head")
+			if head then
+				local b=head:FindFirstChild("RAN_ESP_INFO")
+				if b then b:Destroy() end
+			end
+		end
+	end
+end
+
+local function createESP(other)
+	if other==Player or not other.Character then return end
+
+	local character=other.Character
+	local head=character:FindFirstChild("Head")
+	local root=character:FindFirstChild("HumanoidRootPart")
+	if not head then return end
+
+	local old=character:FindFirstChild("RAN_ESP")
+	if old then old:Destroy() end
+
+	local highlight=Instance.new("Highlight")
+	highlight.Name="RAN_ESP"
+	highlight.FillColor=PURPLE
+	highlight.OutlineColor=Color3.new(1,1,1)
+	highlight.FillTransparency=.55
+	highlight.Parent=character
+
+	local billboard=Instance.new("BillboardGui")
+	billboard.Name="RAN_ESP_INFO"
+	billboard.Adornee=head
+	billboard.Size=UDim2.fromOffset(190,55)
+	billboard.StudsOffset=Vector3.new(0,3,0)
+	billboard.AlwaysOnTop=true
+	billboard.Parent=head
+
+	local name=Instance.new("TextLabel",billboard)
+	name.Size=UDim2.new(1,0,.55,0)
+	name.BackgroundTransparency=1
+	name.Text=other.DisplayName.."  @"..other.Name
+	name.TextColor3=Color3.new(1,1,1)
+	name.TextStrokeTransparency=.25
+	name.TextSize=14
+	name.Font=Enum.Font.GothamBold
+
+	local distance=Instance.new("TextLabel",billboard)
+	distance.Position=UDim2.new(0,0,.5,0)
+	distance.Size=UDim2.new(1,0,.5,0)
+	distance.BackgroundTransparency=1
+	distance.TextColor3=PURPLE
+	distance.TextStrokeTransparency=.3
+	distance.TextSize=12
+	distance.Font=Enum.Font.GothamMedium
+
+	task.spawn(function()
+		while espEnabled and billboard.Parent and character.Parent do
+			local myChar=Player.Character
+			local myRoot=myChar and myChar:FindFirstChild("HumanoidRootPart")
+			local theirRoot=character:FindFirstChild("HumanoidRootPart")
+
+			if myRoot and theirRoot then
+				distance.Text=math.floor((myRoot.Position-theirRoot.Position).Magnitude).." studs"
+			else
+				distance.Text="-- studs"
+			end
+
+			task.wait(.15)
+		end
+	end)
+end
+
+local function updateESP()
+	removeESP()
+	if not espEnabled then return end
+
+	for _,p in ipairs(Players:GetPlayers()) do
+		createESP(p)
+	end
+end
+
+Players.PlayerAdded:Connect(function(p)
+	p.CharacterAdded:Connect(function()
+		task.wait(.5)
+		if espEnabled then createESP(p) end
+	end)
+end)
+
+local function showPlayer()
+	clearContent()
+	addTitle("Player Utility")
+
+	addWalkSpeedSlider()
+
+	addToggle("God Mode",function(on)
+		-- Gunakan sistem HP server-side untuk game sendiri.
+	end)
+
+	addToggle("Auto Heal",function(on)
+		if on then
+			local h=getHumanoid()
+			if h then h.Health=h.MaxHealth end
+		end
+	end)
+
+	addToggle("Noclip",setNoclip)
+
+	addToggle("Reset WalkSpeed",function(on)
+		if on then
+			currentSpeed=DEFAULT_SPEED
+			applyWalkSpeed()
+		end
+	end)
+end
+
+local function showVisual()
+	clearContent()
+	addTitle("Visual")
+
+	addToggle("ESP",function(on)
+		espEnabled=on
+		updateESP()
+	end)
+
+	addToggle("X-Ray Wall",function(on)
+		setXRay(on)
+	end)
+
+	addToggle("Player Info",function(on)
+		-- Tambahkan sistem info game sendiri.
+	end)
+
+	addToggle("Distance ESP",function(on)
+		-- ESP jarak sudah tersedia pada ESP utama.
+	end)
+end
+
+local function showGame()
+	clearContent()
+	addTitle("Game Utility")
+
+	addToggle("Noclip",setNoclip)
+
+	addToggle("Anti Fall",function(on)
+		-- Logic game sendiri.
+	end)
+
+	addToggle("Infinite Jump",function(on)
+		-- Logic game sendiri.
+	end)
+
+	addToggle("Skip End Screen",function(on)
+		-- Logic game sendiri.
+	end)
+end
+
+local function showEmote()
+	clearContent()
+	addTitle("Emote & Skin")
+
+	addToggle("Play Emote",function(on)
+		-- Sambungkan ke sistem emote game sendiri.
+	end)
+
+	addToggle("Wave",function(on)
+		-- Wave emote.
+	end)
+
+	addToggle("Dance",function(on)
+		-- Dance emote.
+	end)
+
+	addToggle("Laugh",function(on)
+		-- Laugh emote.
+	end)
+
+	addToggle("Fake Avatar",function(on)
+		-- Sistem avatar game sendiri.
+	end)
+end
+
+local function addUISizeSlider()
+	local card = addCard(78)
+
+	local valueLabel = Instance.new("TextLabel", card)
+	valueLabel.Position = UDim2.fromOffset(16, 8)
+	valueLabel.Size = UDim2.new(1, -32, 0, 25)
+	valueLabel.BackgroundTransparency = 1
+	valueLabel.Text = "UI Size                         " .. uiScaleValue .. "%"
+	valueLabel.TextColor3 = TEXT
+	valueLabel.TextSize = 15
+	valueLabel.Font = Enum.Font.GothamMedium
+	valueLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+	local bar = Instance.new("Frame", card)
+	bar.Position = UDim2.fromOffset(16, 47)
+	bar.Size = UDim2.new(1, -32, 0, 7)
+	bar.BackgroundColor3 = Color3.fromRGB(50, 51, 60)
+	bar.BorderSizePixel = 0
+	Instance.new("UICorner", bar).CornerRadius = UDim.new(1, 0)
+
+	local percent = (uiScaleValue - MIN_UI_SCALE) / (MAX_UI_SCALE - MIN_UI_SCALE)
+
+	local fill = Instance.new("Frame", bar)
+	fill.Size = UDim2.new(percent, 0, 1, 0)
+	fill.BackgroundColor3 = PURPLE
+	fill.BorderSizePixel = 0
+	Instance.new("UICorner", fill).CornerRadius = UDim.new(1, 0)
+
+	local knob = Instance.new("TextButton", bar)
+	knob.Size = UDim2.fromOffset(19, 19)
+	knob.Position = UDim2.new(percent, -9, .5, -9)
+	knob.BackgroundColor3 = Color3.fromRGB(240, 240, 245)
+	knob.Text = ""
+	Instance.new("UICorner", knob).CornerRadius = UDim.new(1, 0)
+
+	local dragging = false
+
+	local function setUISize(x)
+		local p = math.clamp(
+			(x - bar.AbsolutePosition.X) / bar.AbsoluteSize.X,
+			0, 1
+		)
+
+		uiScaleValue = math.floor(
+			MIN_UI_SCALE + p * (MAX_UI_SCALE - MIN_UI_SCALE) + .5
+		)
+
+		fill.Size = UDim2.new(p, 0, 1, 0)
+		knob.Position = UDim2.new(p, -9, .5, -9)
+		valueLabel.Text = "UI Size                         " .. uiScaleValue .. "%"
+
+		applyUISize()
+	end
+
+	knob.MouseButton1Down:Connect(function()
+		dragging = true
+	end)
+
+	bar.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1
+			or input.UserInputType == Enum.UserInputType.Touch then
+			dragging = true
+			setUISize(input.Position.X)
+		end
+	end)
+
+	UIS.InputChanged:Connect(function(input)
+		if dragging and (
+			input.UserInputType == Enum.UserInputType.MouseMovement
+			or input.UserInputType == Enum.UserInputType.Touch
+		) then
+			setUISize(input.Position.X)
+		end
+	end)
+
+	UIS.InputEnded:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1
+			or input.UserInputType == Enum.UserInputType.Touch then
+			dragging = false
+		end
+	end)
+end
+
+local function showSettings()
+	clearContent()
+	addTitle("Settings")
+
+	addUISizeSlider()
+
+	addToggle("Ping & FPS Counter",function(on)
+		-- Counter game sendiri.
+	end)
+
+	addToggle("Low Graphics",function(on)
+		-- Pengaturan grafik game sendiri.
+	end)
+
+	addToggle("Camera Follow Body",function(on)
+		-- Camera setting.
+	end)
+
+	addToggle("Anti Staff",function(on)
+		-- Logic game sendiri.
+	end)
+end
+
+local currentButton
+
+local function sideButton(icon,name,callback)
+	local b=Instance.new("TextButton",SideList)
+	b.Size=UDim2.new(1,-5,0,46)
+	b.BackgroundTransparency=1
+	b.Text=""
+
+	local i=Instance.new("TextLabel",b)
+	i.Size=UDim2.fromOffset(42,46)
+	i.BackgroundTransparency=1
+	i.Text=icon
+	i.TextSize=19
+	i.TextColor3=TEXT
+
+	local n=Instance.new("TextLabel",b)
+	n.Position=UDim2.fromOffset(48,0)
+	n.Size=UDim2.new(1,-50,1,0)
+	n.BackgroundTransparency=1
+	n.Text=name
+	n.TextColor3=TEXT
+	n.TextSize=15
+	n.Font=Enum.Font.GothamBold
+	n.TextXAlignment=Enum.TextXAlignment.Left
+
+	local active=Instance.new("Frame",b)
+	active.Size=UDim2.fromOffset(5,34)
+	active.Position=UDim2.fromOffset(0,6)
+	active.BackgroundColor3=PURPLE
+	active.Visible=false
+	Instance.new("UICorner",active).CornerRadius=UDim.new(1,0)
+
+	b.MouseButton1Click:Connect(function()
+		if currentButton then currentButton.Visible=false end
+		active.Visible=true
+		currentButton=active
+		callback()
+	end)
+end
+
+sideButton("●","Info",function()
+	clearContent()
+	addTitle("Info")
+
+	local card=addCard(110)
+	local info=Instance.new("TextLabel",card)
+	info.Size=UDim2.new(1,-30,1,-20)
+	info.Position=UDim2.fromOffset(15,10)
+	info.BackgroundTransparency=1
+	info.Text="Welcome, @"..Player.Name..
+		"\nRAN Hub • Peaceful Community"..
+		"\nRoblox Studio Edition"
+	info.TextColor3=TEXT
+	info.TextSize=15
+	info.Font=Enum.Font.GothamMedium
+	info.TextXAlignment=Enum.TextXAlignment.Left
+	info.TextYAlignment=Enum.TextYAlignment.Center
+end)
+
+sideButton("⚔","Player",showPlayer)
+sideButton("◉","Visual",showVisual)
+sideButton("◌","Game",showGame)
+sideButton("◉","Emote & Skin",showEmote)
+sideButton("⚙","Settings",showSettings)
+
+Search:GetPropertyChangedSignal("Text"):Connect(function()
+	local query=string.lower(Search.Text)
+
+	for _,button in ipairs(SideList:GetChildren()) do
+		if button:IsA("TextButton") then
+			local label=button:FindFirstChildWhichIsA("TextLabel")
+
+			if label then
+				local name=string.lower(label.Text)
+				button.Visible=(query=="" or string.find(name,query)~=nil)
+			end
+		end
+	end
+end)
+
+local dragging=false
+local dragStart
+local startPos
+
+Header.InputBegan:Connect(function(input)
+	if input.UserInputType==Enum.UserInputType.MouseButton1
+		or input.UserInputType==Enum.UserInputType.Touch then
+
+		dragging=true
+		dragStart=input.Position
+		startPos=Main.Position
+	end
+end)
+
+UIS.InputChanged:Connect(function(input)
+	if dragging and (input.UserInputType==Enum.UserInputType.MouseMovement
+		or input.UserInputType==Enum.UserInputType.Touch) then
+
+		local delta=input.Position-dragStart
+
+		Main.Position=UDim2.new(
+			startPos.X.Scale,
+			startPos.X.Offset+delta.X,
+			startPos.Y.Scale,
+			startPos.Y.Offset+delta.Y
+		)
+	end
+end)
+
+UIS.InputEnded:Connect(function(input)
+	if input.UserInputType==Enum.UserInputType.MouseButton1
+		or input.UserInputType==Enum.UserInputType.Touch then
+		dragging=false
+	end
+end)
+
+local minimized=false
+
+Minimize.MouseButton1Click:Connect(function()
+	minimized=not minimized
+
+	Sidebar.Visible=not minimized
+	Content.Visible=not minimized
+	Divider.Visible=not minimized
+
+	if minimized then
+		Main.Size=UDim2.fromOffset(330,65)
+	else
+		Main.Size=UDim2.fromOffset(800,465)
+	end
+end)
+
+showPlayer()
+applyWalkSpeed()
+applyUISize()
